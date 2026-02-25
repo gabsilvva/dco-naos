@@ -3,7 +3,7 @@ import { parse } from "json2csv";
 import { config, enterprise } from "@/ecosystem.config";
 import { GET } from "@action/database/database";
 import { uploadCatalog } from "@action/minio/minio";
-import { Media, ProductMeta } from "./meta.types";
+import { ProductMeta } from "./meta.types";
 import { ProductGoogle } from "./google.types";
 import { ProductTikTok } from "./tiktok.types";
 
@@ -114,15 +114,19 @@ async function tiktok(data: any[]) {
       sku_id: tiktok.sku_id,
       title: tiktok.title,
       description: tiktok.description,
-      availability: tiktok.availability,
-      condition: tiktok.product_detail.condition,
-      price: `${tiktok.price_info.price} BRL`,
-      sale_price: "",
-      brand: tiktok.brand || enterprise.name,
-      google_product_category: tiktok.google_product_category,
-      link: tiktok.landing_page.landing_page_url,
-      image_url: tiktok.image_url,
-      video_url: tiktok.video_url,
+      availability: tiktok.availability.replace("_", " "),
+      condition: tiktok.condition,
+      price: `${tiktok.price} BRL`,
+      sale_price: tiktok.sale_price ? `${tiktok.sale_price} BRL` : "",
+      link: tiktok.link,
+      image_link: tiktok.image_link,
+      video_link: tiktok.video_link || "",
+      brand: tiktok.brand,
+      google_product_category: tiktok.google_product_category || "",
+      additional_image_link: tiktok.additional_image_link || "",
+      age_group: tiktok.age_group || "",
+      gender: tiktok.gender || "",
+      item_group_id: tiktok.item_group_id || "",
       custom_label_0: tiktok.custom_label_0 || "",
       custom_label_1: tiktok.custom_label_1 || "",
       custom_label_2: tiktok.custom_label_2 || "",

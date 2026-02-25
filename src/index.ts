@@ -234,9 +234,9 @@ export async function process() {
           "Formatted sale price": formattedPrice,
         };
 
-        const availabilityMap: Record<string, ProductTikTok['availability']> = {
+        const availabilityMap: Record<string, ProductTikTok["availability"]> = {
           'in stock': 'IN_STOCK',
-          'available for order': 'AVAILABLE_FOR_ORDER',
+          'available for order': 'AVAILABLE',
           'out of stock': 'OUT_OF_STOCK',
           'discontinued': 'DISCONTINUED'
         };
@@ -245,20 +245,28 @@ export async function process() {
           sku_id: crm,
           title: item.name,
           description: item.name,
-          availability: availabilityMap[productMeta.availability] || 'IN_STOCK',
-          google_product_category: "Beauty > Ecommerce",
+
+          availability: availabilityMap[productMeta.availability] || "IN_STOCK",
+          condition: "NEW",
+
+          price: priceValue,
+          sale_price: undefined,
+
+          link: item.link || config.url,
+          image_link: tiktokUrls.images[0] || "",
+          video_link: tiktokUrls.videos[0] || "",
+
           brand,
-          image_url: tiktokUrls.images[0] || "",
-          video_url: tiktokUrls.videos[0] || "",
-          product_detail: {
-            condition: "NEW"
-          },
-          price_info: {
-            price: priceValue || 0
-          },
-          landing_page: {
-            landing_page_url: item.link || config.url
-          },
+          google_product_category: "Beauty > Ecommerce",
+
+          age_group: item.age_group || "",
+          gender: item.gender || "",
+
+          custom_label_0: "",
+          custom_label_1: "",
+          custom_label_2: "",
+          custom_label_3: "",
+          custom_label_4: "",
         };
 
         const products = {
