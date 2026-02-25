@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Products {
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  crm          String    @unique(map: "crm") @db.Char(255)
+  name         String    @db.VarChar(255)
+  availability String    @db.VarChar(255)
+  products     Json
+  creative     Json
+  medias       Json
+  updated      DateTime  @default(now()) @updatedAt @db.Timestamp(0)
+  created      DateTime  @default(now()) @db.Timestamp(0)
+
+  @@map("products")
+}
+
+model Leads {
+  leadid   String   @id @db.VarChar(255)
+  formid   String   @db.VarChar(255)
+  email    String   @db.VarChar(255)
+  phone    String   @db.VarChar(255)
+  crm      String   @db.VarChar(255)
+  created  DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("leads")
+}

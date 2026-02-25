@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "rootDir": "src",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": [
+        "*"
+      ],
+      "~/*": [
+        "*"
+      ],
+      "@action/*": [
+        "actions/*"
+      ],
+      "@asset/*": [
+        "assets/*"
+      ],
+      "@helper/*": [
+        "helpers/*"
+      ],
+      "@service/*": [
+        "services/*"
+      ],
+    },
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowJs": true
+  },
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

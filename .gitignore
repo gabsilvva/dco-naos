@@ -1,0 +1,11 @@
+node_modules
+build
+coverage
+.vscode
+.DS_STORE
+tmp
+temp
+.env
+dist
+logs
+/src/generated/prisma
