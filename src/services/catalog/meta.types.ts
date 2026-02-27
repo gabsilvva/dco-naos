@@ -43,6 +43,8 @@ export interface ProductMeta {
   custom_label_2?: string;
   custom_label_3?: string;
   custom_label_4?: string;
+  inventory?: number;
+  image_link?: string;
 }
 
 export interface Media {
