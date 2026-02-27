@@ -10,7 +10,7 @@ import { UPSERT, UPDATE, GET, DELETE } from "@action/database/database";
 import { DatabaseRecord } from "@action/database/database.types";
 
 import { catalog } from "@service/catalog/catalog";
-import { ProductMeta, Medias, Media } from "@service/catalog/meta.types";
+import { ProductMeta, Medias } from "@service/catalog/meta.types";
 import { ProductTikTok } from "@service/catalog/tiktok.types";
 import { ProductGoogle } from "@service/catalog/google.types";
 
@@ -22,32 +22,6 @@ import { Identifier, Creative } from "@service/creatives/creatives.types";
 import { font } from "@helper/font";
 import { rules } from "@helper/rules";
 import { csv } from "@helper/fetch";
-
-function filterMediasByPlatform(medias: Medias, platform: 'meta' | 'google' | 'tiktok') {
-  const platformTags: Record<string, string[]> = {
-    meta: ['1080x1080', '1080x1350', '1080x1920'],
-    google: ['160x600', '300x250', '728x90'],
-    tiktok: ['1080x1920']
-  };
-
-  const tags = platformTags[platform];
-  
-  return {
-    images: medias.images.filter(media => 
-      media.tag.some(tag => tags.includes(tag))
-    ),
-    videos: medias.videos.filter(media => 
-      media.tag.some(tag => tags.includes(tag))
-    )
-  };
-}
-
-function extractMediaUrls(medias: { images: Media[], videos: Media[] }) {
-  return {
-    images: medias.images.map(m => m.url),
-    videos: medias.videos.map(m => m.url)
-  };
-}
 
 export async function reset() {
   try {
@@ -63,7 +37,7 @@ async function deletion(data: Response[]) {
   try {
     const existing = await GET(config.database.products);
     
-    const ids = new Set(data.map((item) => item.crm.replace(/\D/g, "")));
+    const ids = new Set(data.map((item) => item.id.replace(/\D/g, "")));
     
     const existingRecords = Array.isArray(existing.data)
       ? existing.data
@@ -104,7 +78,7 @@ export async function process() {
     await deletion(data.sheet);
 
     for (const value of data.sheet) {
-      const { crm, leads_previstos, name, brand, gender, age_group } = value;
+      const { id: crm, leads_previstos, name, brand, gender, age_group } = value;
 
       if (!crm || !leads_previstos) {
         console.warn("Faltou ID ou Leads previstos na planilha.");
@@ -118,7 +92,7 @@ export async function process() {
         id: crm,
         title: item.name,
         description: item.name,
-        price: item.price ? `${item.price} BRL` : "0 BRL",
+        price: item.price ? `${parseFloat(item.price.toString().replace(/[^\d.,]/g, "").replace(",", ".")).toFixed(2)} BRL` : "0.00 BRL",
         link: item.link || config.url,
         availability: item.availability === "out of stock"
           ? "out of stock"
@@ -151,40 +125,10 @@ export async function process() {
           continue;
         }
 
-        const init = new Date();
-        const identifier: Identifier = {
-          id: crm,
-          timestamp: init.getTime().toString(),
-          brand,
-        };
-
         const normalizeValue = (value: any): string => {
           if (value === null || value === undefined) return "";
           return String(value).trim().toUpperCase();
         };
-
-        const hasChanges =
-          !existing.data ||
-          !existing.data.products ||
-          normalizeValue(existing.data.crm) !== normalizeValue(item.crm) ||
-          normalizeValue(existing.data.name) !== normalizeValue(item.name) ||
-          normalizeValue(existing.data.products.meta.brand) !== normalizeValue(item.brand) ||
-          normalizeValue(existing.data.availability) !== normalizeValue(item.availability) ||
-          normalizeValue(existing.data.products.meta.price) !== normalizeValue(item.price ? `${item.price} BRL` : "0 BRL") ||
-          normalizeValue(existing.data.products.meta.link) !== normalizeValue(item.link) ||
-          normalizeValue(existing.data.creative.text1) !== normalizeValue(item.text1) ||
-          normalizeValue(existing.data.creative.text2) !== normalizeValue(item.text2) ||
-          normalizeValue(existing.data.creative.text3) !== normalizeValue(item.text3) ||
-          normalizeValue(existing.data.creative.text4) !== normalizeValue(item.text4) ||
-          normalizeValue(existing.data.creative.image) !== normalizeValue(item.image);
-
-        if (hasChanges) {
-          console.log(`🔄 Criação ou mudança detectada: ${crm} - ${name}`);
-        } else {
-          console.log(`Não houve mudanças detectadas: ${crm} - ${name}`);
-          console.log("\n");
-          continue;
-        }
 
         const creative: Creative = {
           text1: item.text1,
@@ -194,28 +138,72 @@ export async function process() {
           image: item.image,
         };
 
-        let allMedias: Medias = { images: [], videos: [] };
+        const hasCreativeChanges =
+          !existing.data ||
+          !existing.data.products ||
+          normalizeValue(existing.data.creative.text1) !== normalizeValue(item.text1) ||
+          normalizeValue(existing.data.creative.text2) !== normalizeValue(item.text2) ||
+          normalizeValue(existing.data.creative.text3) !== normalizeValue(item.text3) ||
+          normalizeValue(existing.data.creative.text4) !== normalizeValue(item.text4) ||
+          normalizeValue(existing.data.creative.image) !== normalizeValue(item.image);
 
-        if(brand === "BIODERMA") {
-          allMedias = await bioderma(identifier, creative);
-        } else if(brand === "ESTHEDERM") {
-          allMedias = await esthederm(identifier, creative);
-        } else if(brand === "ETATPUR") {
-          allMedias = await etatpur(identifier, creative);
+        const priceValue = item.price ? parseFloat(item.price.toString().replace(/[^\d.,]/g, "").replace(",", ".")) : 0;
+        const formattedPrice = priceValue ? `R$ ${priceValue.toFixed(2).replace(".", ",")}` : "R$ 0,00";
+
+        // --- Geração de criativos (apenas se houver mudança no criativo) ---
+        let allMedias: Medias;
+
+        if (hasCreativeChanges) {
+          console.log(`🔄 Mudança no criativo detectada: ${crm} - ${name}`);
+
+          const init = new Date();
+          const identifier: Identifier = {
+            id: crm,
+            timestamp: init.getTime().toString(),
+            brand,
+          };
+
+          if (brand === "BIODERMA") {
+            allMedias = await bioderma(identifier, creative);
+          } else if (brand === "ESTHEDERM") {
+            allMedias = await esthederm(identifier, creative);
+          } else if (brand === "ETATPUR") {
+            allMedias = await etatpur(identifier, creative);
+          } else {
+            console.log("Nenhum template para essa marca:", brand);
+            allMedias = { images: [], videos: [] };
+          }
+
+          if (allMedias.videos.length === 0) {
+            console.log("Não conseguiu gerar vídeos.");
+            continue;
+          }
+
+          console.log(`✓ Criativos gerados: ${name}`, init, "-", new Date());
         } else {
-          console.log("Nenhum template para essa marca:", brand);
+          // Reutiliza as mídias já salvas no banco
+          console.log(`♻️  Sem mudança no criativo, reutilizando mídias: ${crm} - ${name}`);
+          allMedias = existing.data.medias ?? { images: [], videos: [] };
         }
 
-        const metaMedias = filterMediasByPlatform(allMedias, 'meta');
-        const googleMedias = filterMediasByPlatform(allMedias, 'google');
-        const tiktokMedias = filterMediasByPlatform(allMedias, 'tiktok');
+        // --- Montagem dos produtos (sempre atualizado) ---
+        const platformTags = {
+          meta: ['1080x1080', '1080x1350', '1080x1920'],
+          google: ['160x600', '300x250', '728x90'],
+          tiktok: ['1080x1920'],
+        };
 
-        const metaUrls = extractMediaUrls(metaMedias);
-        const googleUrls = extractMediaUrls(googleMedias);
-        const tiktokUrls = extractMediaUrls(tiktokMedias);
+        const filterAndExtract = (platform: keyof typeof platformTags) => {
+          const tags = platformTags[platform];
+          return {
+            images: allMedias.images.filter(m => m.tag.some(t => tags.includes(t))).map(m => m.url),
+            videos: allMedias.videos.filter(m => m.tag.some(t => tags.includes(t))).map(m => m.url),
+          };
+        };
 
-        const priceValue = item.price ? parseFloat(item.price.toString().replace(/\D/g, "")) : 0;
-        const formattedPrice = priceValue ? `R$ ${priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00";
+        const metaUrls = filterAndExtract('meta');
+        const googleUrls = filterAndExtract('google');
+        const tiktokUrls = filterAndExtract('tiktok');
 
         const productGoogle: ProductGoogle = {
           ID: crm,
@@ -280,37 +268,34 @@ export async function process() {
           videos: allMedias.videos,
         };
 
-        if (allMedias.videos.length > 0) {
-          const record: DatabaseRecord = {
-            id: randomUUID(),
-            crm,
-            name: productMeta.title,
-            availability: rule.availability,
-            products,
-            creative,
-            medias: mediasData,
-          };
+        // --- Upsert sempre executado ---
+        const record: DatabaseRecord = {
+          id: existing.data?.id ?? randomUUID(),
+          crm,
+          name: productMeta.title,
+          availability: rule.availability,
+          products,
+          creative,
+          medias: mediasData,
+        };
 
-          const upsert = await UPSERT(
-            config.database.products,
-            { crm },
-            record,
-            record
-          );
+        const upsert = await UPSERT(
+          config.database.products,
+          { crm },
+          record,
+          record
+        );
 
-          if (upsert.data) {
-            console.log("\n");
-            console.log(`✓ Processado: ${name}`, init, "-", new Date());
-            console.log(`  - Meta: ${metaUrls.videos.length} vídeos, ${metaUrls.images.length} imagens`);
-            console.log(`  - Google: ${googleUrls.videos.length} vídeos, ${googleUrls.images.length} imagens`);
-            console.log(`  - TikTok: ${tiktokUrls.videos.length} vídeos, ${tiktokUrls.images.length} imagens`);
-            console.log("\n");
-          } else {
-            console.log(`✗ Falha ao processar: ${name}`);
-          }
+        if (upsert.data) {
+          console.log(`✓ Banco atualizado: ${name}`);
+          console.log(`  - Meta: ${metaUrls.videos.length} vídeos, ${metaUrls.images.length} imagens`);
+          console.log(`  - Google: ${googleUrls.videos.length} vídeos, ${googleUrls.images.length} imagens`);
+          console.log(`  - TikTok: ${tiktokUrls.videos.length} vídeos, ${tiktokUrls.images.length} imagens`);
+          console.log("\n");
         } else {
-          console.log("Não conseguiu gerar vídeos.");
+          console.log(`✗ Falha ao atualizar banco: ${name}`);
         }
+
       } catch (error) {
         console.error(`Erro no processamento de ${name}:`, error);
       }

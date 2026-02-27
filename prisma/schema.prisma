@@ -31,3 +31,13 @@ model Leads {
 
   @@map("leads")
 }
+
+model Ids {
+  id      String   @id @db.VarChar(255)
+  name    String   @db.VarChar(255)
+  brand   String   @db.VarChar(255)
+  url    String   @db.VarChar(255)
+  created  DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("ids")
+}

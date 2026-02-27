@@ -21,7 +21,7 @@ export interface Config extends Enterprise {
 }
 
 export interface Response {
-  crm: string;
+  id: string;
   name: string;
   brand: Brand;
   availability: Availability;
