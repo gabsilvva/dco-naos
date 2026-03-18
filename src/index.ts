@@ -150,7 +150,6 @@ export async function process() {
         const priceValue = item.price ? parseFloat(item.price.toString().replace(/[^\d.,]/g, "").replace(",", ".")) : 0;
         const formattedPrice = priceValue ? `R$ ${priceValue.toFixed(2).replace(".", ",")}` : "R$ 0,00";
 
-        // --- Geração de criativos (apenas se houver mudança no criativo) ---
         let allMedias: Medias;
 
         if (hasCreativeChanges) {
@@ -181,12 +180,9 @@ export async function process() {
 
           console.log(`✓ Criativos gerados: ${name}`, init, "-", new Date());
         } else {
-          // Reutiliza as mídias já salvas no banco
           console.log(`♻️  Sem mudança no criativo, reutilizando mídias: ${crm} - ${name}`);
           allMedias = existing.data.medias ?? { images: [], videos: [] };
         }
-
-        // --- Montagem dos produtos (sempre atualizado) ---
         const platformTags = {
           meta: ['1080x1080', '1080x1350', '1080x1920'],
           google: ['160x600', '300x250', '728x90'],
@@ -268,7 +264,6 @@ export async function process() {
           videos: allMedias.videos,
         };
 
-        // --- Upsert sempre executado ---
         const record: DatabaseRecord = {
           id: existing.data?.id ?? randomUUID(),
           crm,

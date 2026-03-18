@@ -16,7 +16,7 @@ export const fonts = [
   { name: "Gotham", file: "Gotham-Book.ttf", weight: 200, },
   { name: "Roboto", file: "Roboto-Bold.ttf", weight: 700, },
   { name: "Roboto", file: "Roboto-Regular.ttf", weight: 400, },
-  { name: "Source Serif 4 18pt Light", file: "SourceSerif-Light.ttf", weight: 300, },
+  { name: "Source Serif 4 18pt ExtraLight", file: "SourceSerif4_18pt-ExtraLight.ttf", weight: 200, },
 ];
 
 const sizes: Size[] = [
@@ -87,21 +87,33 @@ function animate() {
   };
 }
 
-function tspan(
-  text: string,
-  x: number,
+function tspan({
+  text,
+  x,
   maxLines = 3,
-  fill?: string,
-  weight?: number,
-  size?: number,
-  family?: string,
+  fill,
+  weight,
+  size,
+  family,
   lineHeight = 1.1,
-  leadingDy?: number | string,
-  maxWidth?: number
-) {
+  leadingDy,
+  maxWidth,
+  uppercase = false,
+}: {
+  text: string;
+  x: number;
+  maxLines?: number;
+  fill?: string;
+  weight?: number;
+  size?: number;
+  family?: string;
+  lineHeight?: number;
+  leadingDy?: number | string;
+  maxWidth?: number;
+  uppercase?: boolean;
+}) {
   const words = text.split(' ');
   const lines: string[] = [];
-
   const estimateWidth = (str: string) =>
     str.split('').reduce((acc, char) => {
       if ('iIlj1|!.,;:\'"'.includes(char)) return acc + (size! * 0.3);
@@ -110,7 +122,6 @@ function tspan(
       if (char >= 'a' && char <= 'z' || char >= 'à' && char <= 'ÿ') return acc + (size! * 0.58);
       return acc + (size! * 0.6);
     }, 0);
-
   const splitEqual = () => {
     const totalWords = words.length;
     const base = Math.floor(totalWords / maxLines);
@@ -123,39 +134,27 @@ function tspan(
       if (lineWords.length > 0) lines.push(lineWords.join(' '));
     }
   };
-
   if (maxWidth && size) {
     let currentLine = '';
     for (const word of words) {
       const test = currentLine ? `${currentLine} ${word}` : word;
       if (currentLine && estimateWidth(test) > maxWidth) {
-        if (lines.length < maxLines - 1) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          currentLine = test;
-        }
+        lines.push(currentLine);
+        currentLine = word;
       } else {
         currentLine = test;
       }
     }
     if (currentLine) lines.push(currentLine);
-
-    if (lines.length < maxLines) {
-      lines.length = 0;
-      splitEqual();
-    }
   } else {
     splitEqual();
   }
-
   const lineHeightEm = `${lineHeight}em`;
-
   return lines.map((line, index) => {
     const dy = index === 0
       ? (leadingDy !== undefined ? (typeof leadingDy === 'number' ? `${leadingDy}em` : leadingDy) : 0)
       : lineHeightEm;
-
+    const content = uppercase ? line.toUpperCase() : line;
     return `<tspan
       x="${x}"
       dy="${dy}"
@@ -164,7 +163,7 @@ function tspan(
       font-size="${size}"
       font-family="${family}"
     >
-      ${line}
+      ${content}
     </tspan>`;
   }).join('\n');
 }
@@ -552,51 +551,24 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
 
       const positions: Record<number, any> = {
         1080: {
-          logo: {
-            y: 40,
-          },
-          text: {
-            l: 650,
-            y: 120,
-          },
-          image: {
-            r: 450,
-            b: 20,
-            h: 650,
-          },
+          logo: { y: 40 },
+          text: { l: 650, y: 120 },
+          image: { r: 450, b: 20, h: 650 },
         },
         1350: {
-          logo: {
-            y: 65,
-          },
-          text: {
-            l: 650,
-            y: 220,
-          },
-          image: {
-            r: 450,
-            b: 20,
-            h: 780,
-          },
+          logo: { y: 65 },
+          text: { l: 650, y: 220 },
+          image: { r: 450, b: 20, h: 780 },
         },
         1920: {
-          logo: {
-            y: 80,
-          },
-          text: {
-            l: 100,
-            y: 1140,
-          },
-          image: {
-            r: 70,
-            b: 32,
-            h: 900,
-          },
+          logo: { y: 80 },
+          text: { l: 100, y: 1140 },
+          image: { r: 70, b: 32, h: 900 },
         },
       };
       const position = positions[h];
       const storie = h == 1920;
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -623,10 +595,10 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
             y="${animate().fromTop(f, 25, position.text.y)}"
             opacity="${animate().opacity(f, 25)}"
           >
-            ${tspan(creative.text1, position.text.l, 2, "#003B70", 700, 40, fonts[2].name, 1.1, 1, 400)}
-            ${tspan(creative.text2, position.text.l, 4, "#000000", 700, 28, fonts[2].name, 1.1, 2.5, 350)}
-            ${tspan(creative.text3, position.text.l, 4, "#000000", 300, 24, fonts[2].name, 1.1, 2.5, 300)}
-            ${tspan(creative.text4, position.text.l, 3, "#003B70", 700, 32, fonts[2].name, 1.1, storie ? 3 : 6, 350)}
+            ${tspan({ text: creative.text1, x: position.text.l, maxLines: 2, fill: "#003B70", weight: 700, size: 40, family: fonts[2].name, lineHeight: 1.1, leadingDy: 1, maxWidth: 400, uppercase: true })}
+            ${tspan({ text: creative.text2, x: position.text.l, maxLines: 4, fill: "#000000", weight: 700, size: 28, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2.5, maxWidth: 350, uppercase: true })}
+            ${tspan({ text: creative.text3, x: position.text.l, maxLines: 4, fill: "#000000", weight: 300, size: 24, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2.5, maxWidth: 300, uppercase: true })}
+            ${tspan({ text: creative.text4, x: position.text.l, maxLines: 3, fill: "#003B70", weight: 700, size: 32, family: fonts[2].name, lineHeight: 1.1, leadingDy: storie ? 3 : 6, maxWidth: 350, uppercase: true })}
           </text>
         </svg>
       `;
@@ -636,51 +608,24 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
 
       const positions: Record<number, any> = {
         1080: {
-          logo: {
-            y: 40,
-          },
-          text: {
-            l: 650,
-            y: 120,
-          },
-          image: {
-            r: 450,
-            b: 20,
-            h: 650,
-          },
+          logo: { y: 40 },
+          text: { l: 650, y: 120 },
+          image: { r: 450, b: 20, h: 650 },
         },
         1350: {
-          logo: {
-            y: 65,
-          },
-          text: {
-            l: 650,
-            y: 220,
-          },
-          image: {
-            r: 450,
-            b: 20,
-            h: 780,
-          },
+          logo: { y: 65 },
+          text: { l: 650, y: 220 },
+          image: { r: 450, b: 20, h: 780 },
         },
         1920: {
-          logo: {
-            y: 80,
-          },
-          text: {
-            l: 100,
-            y: 1140,
-          },
-          image: {
-            r: 70,
-            b: 32,
-            h: 900,
-          },
+          logo: { y: 80 },
+          text: { l: 100, y: 1140 },
+          image: { r: 70, b: 32, h: 900 },
         },
       };
       const position = positions[h];
       const storie = h == 1920;
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -712,10 +657,10 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
             dominant-baseline="text-before-edge"
             y="${position.text.y}"
           >
-            ${tspan(creative.text1, position.text.l, 2, "#003B70", 700, 45, fonts[2].name, 1.1, 1, 400)}
-            ${tspan(creative.text2, position.text.l, 3, "#000000", 700, 28, fonts[2].name, 1.1, 2.5, 350)}
-            ${tspan(creative.text3, position.text.l, 4, "#000000", 300, 24, fonts[2].name, 1.1, 2.5, 300)}
-            ${tspan(creative.text4, position.text.l, 3, "#003B70", 700, 32, fonts[2].name, 1.1, storie ? 3 : 6, 350)}
+            ${tspan({ text: creative.text1, x: position.text.l, maxLines: 2, fill: "#003B70", weight: 700, size: 45, family: fonts[2].name, lineHeight: 1.1, leadingDy: 1, maxWidth: 400, uppercase: true })}
+            ${tspan({ text: creative.text2, x: position.text.l, maxLines: 3, fill: "#000000", weight: 700, size: 28, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2.5, maxWidth: 350, uppercase: true })}
+            ${tspan({ text: creative.text3, x: position.text.l, maxLines: 4, fill: "#000000", weight: 300, size: 24, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2.5, maxWidth: 300, uppercase: true })}
+            ${tspan({ text: creative.text4, x: position.text.l, maxLines: 3, fill: "#003B70", weight: 700, size: 32, family: fonts[2].name, lineHeight: 1.1, leadingDy: storie ? 3 : 6, maxWidth: 350, uppercase: true })}
           </text>
         </svg>
       `;
@@ -725,45 +670,21 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
 
       const positions: Record<number, any> = {
         250: {
-          text: {
-            y: 50,
-            l: 175,
-            w: 100,
-          },
-          image: {
-            r: 140,
-            b: 10,
-            h: 180,
-          },
+          text: { y: 50, l: 175, w: 100 },
+          image: { r: 140, b: 10, h: 180 },
         },
         600: {
-          text: {
-            y: 340,
-            l: 20,
-            w: 100,
-          },
-          image: {
-            r: w,
-            b: 275,
-            h: 180,
-          },
+          text: { y: 340, l: 20, w: 100 },
+          image: { r: w, b: 275, h: 180 },
         },
         90: {
-          text: {
-            y: 8,
-            l: 210,
-            w: 190,
-          },
-          image: {
-            r: 540,
-            b: -5,
-            h: h,
-          },
+          text: { y: 8, l: 210, w: 190 },
+          image: { r: 540, b: -5, h: h },
         },
       };
       const position = positions[h];
       const vertical = h == 600;
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -790,15 +711,15 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
                 dominant-baseline="text-before-edge"
                 y="0"
               >
-                ${tspan(creative.text1, position.text.l, 2, "#003B70", 700, 13, fonts[2].name, 1.1, 1, position.text.w)}
-                ${tspan(creative.text2, position.text.l, 3, "#000000", 700, 9, fonts[2].name, 1.1, 2, position.text.w)}
+                ${tspan({ text: creative.text1, x: position.text.l, maxLines: 2, fill: "#003B70", weight: 700, size: 13, family: fonts[2].name, lineHeight: 1.1, leadingDy: 1, maxWidth: position.text.w, uppercase: true })}
+                ${tspan({ text: creative.text2, x: position.text.l, maxLines: 3, fill: "#000000", weight: 700, size: 9, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2, maxWidth: position.text.w, uppercase: true })}
               </text>
               <text
                 dominant-baseline="text-before-edge"
                 y="${position.text.y}"
               >
-                ${tspan(creative.text3, position.text.l + position.text.w, 4, "#000000", 300, 7, fonts[2].name, 1.1, 1, position.text.w)}
-                ${tspan(creative.text4, position.text.l + position.text.w, 2, "#003B70", 700, 11, fonts[2].name, 1.1, 1.5, position.text.w)}
+                ${tspan({ text: creative.text3, x: position.text.l + position.text.w, maxLines: 4, fill: "#000000", weight: 300, size: 7, family: fonts[2].name, lineHeight: 1.1, leadingDy: 1, maxWidth: position.text.w, uppercase: true })}
+                ${tspan({ text: creative.text4, x: position.text.l + position.text.w, maxLines: 2, fill: "#003B70", weight: 700, size: 11, family: fonts[2].name, lineHeight: 1.1, leadingDy: 1.5, maxWidth: position.text.w, uppercase: true })}
               </text>
             `
             :
@@ -807,10 +728,10 @@ export async function bioderma(identifier: Identifier, creative: Creative) {
                 dominant-baseline="text-before-edge"
                 y="${position.text.y}"
               >
-                ${tspan(creative.text1, position.text.l, 2, "#003B70", 700, 13, fonts[2].name, 1.1, 1, position.text.w)}
-                ${tspan(creative.text2, position.text.l, 4, "#000000", 700, 9, fonts[2].name, 1.1, 2, position.text.w)}
-                ${tspan(creative.text3, position.text.l, 5, "#000000", 300, 7, fonts[2].name, 1.1, 2, position.text.w)}
-                ${tspan(creative.text4, position.text.l, 3, "#003B70", 700, 11, fonts[2].name, 1.1, 2, position.text.w)}
+                ${tspan({ text: creative.text1, x: position.text.l, maxLines: 2, fill: "#003B70", weight: 700, size: 13, family: fonts[2].name, lineHeight: 1.1, leadingDy: 1, maxWidth: position.text.w, uppercase: true })}
+                ${tspan({ text: creative.text2, x: position.text.l, maxLines: 4, fill: "#000000", weight: 700, size: 9, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2, maxWidth: position.text.w, uppercase: true })}
+                ${tspan({ text: creative.text3, x: position.text.l, maxLines: 5, fill: "#000000", weight: 300, size: 7, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2, maxWidth: position.text.w, uppercase: true })}
+                ${tspan({ text: creative.text4, x: position.text.l, maxLines: 3, fill: "#003B70", weight: 700, size: 11, family: fonts[2].name, lineHeight: 1.1, leadingDy: 2, maxWidth: position.text.w, uppercase: true })}
               </text>
             `
           }
@@ -833,65 +754,29 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
 
       const positions: Record<number, any> = {
         1080: {
-          logo: {
-            y: 50,
-          },
-          image: {
-            y: 360,
-            h: h * 0.5,
-          },
-          text1: {
-            y: 130,
-          },
-          text2: {
-            l: 455,
-            y: 600,
-          },
-          text3: {
-            l: 625,
-          },
+          logo: { y: 50 },
+          image: { y: 360, h: h * 0.5 },
+          text1: { y: 130 },
+          text2: { l: 455, y: 560 },
+          text3: { l: 625 },
         },
         1350: {
-          logo: {
-            y: 130,
-          },
-          image: {
-            y: 425,
-            h: h * 0.5,
-          },
-          text1: {
-            y: 210,
-          },
-          text2: {
-            l: 430,
-            y: 730,
-          },
-          text3: {
-            l: 650,
-          },
+          logo: { y: 130 },
+          image: { y: 425, h: h * 0.5 },
+          text1: { y: 210 },
+          text2: { l: 430, y: 700 },
+          text3: { l: 650 },
         },
         1920: {
-          logo: {
-            y: 380,
-          },
-          image: {
-            y: 680,
-            h: h * 0.43,
-          },
-          text1: {
-            y: 460,
-          },
-          text2: {
-            l: 400,
-            y: 1060,
-          },
-          text3: {
-            l: 680,
-          },
+          logo: { y: 380 },
+          image: { y: 680, h: h * 0.43 },
+          text1: { y: 460 },
+          text2: { l: 400, y: 1020 },
+          text3: { l: 680 },
         },
       };
       const position = positions[h];
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -924,9 +809,8 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             text-anchor="middle"
             y="${position.text1.y}"
             opacity="${animate().opacity(f, 25)}"
-            font-style="italic"
           >
-            ${tspan(creative.text1, w / 2, 2, "#000000", 300, 45, fonts[6].name, 1.1, 1, w / 1.5)}
+            ${tspan({ text: creative.text1, x: w / 2, maxLines: 2, fill: "#000000", weight: 300, size: 45, family: fonts[6].name, lineHeight: 1.1, leadingDy: 1, maxWidth: w / 1.1 })}
           </text>
 
           <text
@@ -936,16 +820,16 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text2, position.text2.l, 3, "#000000", 300, 22, fonts[0].name, 1.2, 1, 200)}
+            ${tspan({ text: creative.text2, x: position.text2.l, maxLines: 3, fill: "#000000", weight: 300, size: 25, family: fonts[0].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 200, uppercase: true })}
           </text>
 
           <text
             dominant-baseline="text-before-edge"
-            y="${position.text2.y - 50}"
+            y="${position.text2.y - 20}"
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text3, position.text3.l, 6, "#000000", 700, 24, fonts[1].name, 1.2, 1, 180)}
+            ${tspan({ text: creative.text3, x: position.text3.l, maxLines: 5, fill: "#000000", weight: 700, size: 24, family: fonts[1].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 250, uppercase: true })}
           </text>
 
           <text
@@ -955,7 +839,7 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text4, w / 2, 1, "#000000", 700, 24, fonts[1].name, 1, 1, w / 1.5)}
+            ${tspan({ text: creative.text4, x: w / 2, maxLines: 1, fill: "#000000", weight: 700, size: 24, family: fonts[1].name, lineHeight: 1, leadingDy: 1, maxWidth: w / 1.5, uppercase: true })}
           </text>
         </svg>
       `;
@@ -966,58 +850,28 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
 
       const positions: Record<number, any> = {
         250: {
-          image: {
-            y: 85,
-            h: h * 0.55,
-          },
-          text1: {
-            y: 30,
-          },
-          text2: {
-            y: 130,
-            l: 120,
-          },
-          text3: {
-            l: 180,
-          },
+          image: { y: 85, h: h * 0.55 },
+          text1: { y: 30 },
+          text2: { y: 130, l: 120 },
+          text3: { l: 180 },
         },
         600: {
-          image: {
-            y: 200,
-            h: h * 0.35,
-          },
-          text1: {
-            y: 110,
-          },
-          text2: {
-            y: 450,
-            l: w / 2,
-          },
-          text3: {
-            l: w / 2,
-          },
+          image: { y: 200, h: h * 0.35 },
+          text1: { y: 110 },
+          text2: { y: 450, l: w / 2 },
+          text3: { l: w / 2 },
         },
         90: {
-          image: {
-            y: 0,
-            h: h,
-          },
-          text1: {
-            y: 15,
-          },
-          text2: {
-            y: 25,
-            l: 500,
-          },
-          text3: {
-            l: 800,
-          },
+          image: { y: 0, h: h },
+          text1: { y: 15 },
+          text2: { y: 25, l: 500 },
+          text3: { l: 800 },
         },
       };
       const position = positions[h];
       const vertical = h == 600;
       const horizontal = h == 90;
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -1040,9 +894,8 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             dominant-baseline="text-before-edge"
             text-anchor="middle"
             y="${position.text1.y}"
-            font-style="italic"
           >
-            ${tspan(creative.text1, horizontal ? 180 : w / 2, vertical ? 4 : 2, "#000000", 300, 14, fonts[6].name, 1.1, 1, w / 1.5)}
+            ${tspan({ text: creative.text1, x: horizontal ? 180 : w / 2, maxLines: vertical ? 4 : 2, fill: "#000000", weight: 300, size: 14, family: fonts[6].name, lineHeight: 1.1, leadingDy: 1, maxWidth: w / 1.5 })}
           </text>
 
           <text
@@ -1051,7 +904,7 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             y="${position.text2.y}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text2, position.text2.l, 3, "#000000", 300, 8, fonts[0].name, 1.2, 1, w / 1.5)}
+            ${tspan({ text: creative.text2, x: position.text2.l, maxLines: 3, fill: "#000000", weight: 300, size: 8, family: fonts[0].name, lineHeight: 1.2, leadingDy: 1, maxWidth: w / 1.5, uppercase: true })}
           </text>
 
           <text
@@ -1060,7 +913,7 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             y="${vertical ? position.text2.y + 50 : position.text2.y - 10}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text3, position.text3.l, 6, "#000000", 700, 7, fonts[1].name, 1.2, 1, 50)}
+            ${tspan({ text: creative.text3, x: position.text3.l, maxLines: 6, fill: "#000000", weight: 700, size: 7, family: fonts[1].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 50, uppercase: true })}
           </text>
 
           <text
@@ -1069,7 +922,7 @@ export async function esthederm(identifier: Identifier, creative: Creative) {
             y="${position.image.y + position.image.h + 5}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text4, w / 2, vertical ? 2 : 1, "#000000", 700, 6, fonts[1].name, 1.2, 1, w / 1.2)}
+            ${tspan({ text: creative.text4, x: w / 2, maxLines: vertical ? 2 : 1, fill: "#000000", weight: 700, size: 6, family: fonts[1].name, lineHeight: 1.2, leadingDy: 1, maxWidth: w / 1.2, uppercase: true })}
           </text>
         </svg>
       `;
@@ -1089,19 +942,10 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
       const { w, h } = size;
 
       const position: Record<string, any> = {
-        logo: {
-          y: 50,
-        },
-        image: {
-          y: 270,
-          h: h == 1920 ? h * 0.5 : h * 0.62,
-        },
-        text1: {
-          y: 120,
-        },
-        text2: {
-          y: 600,
-        },
+        logo: { y: 50 },
+        image: { y: 270, h: h == 1920 ? h * 0.5 : h * 0.62 },
+        text1: { y: 120 },
+        text2: { y: 600 },
       };
       const margins: Record<number, number> = {
         1080: 0,
@@ -1109,7 +953,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
         1920: 350,
       };
       const margin = (y: number) => y + margins[h];
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -1144,7 +988,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text1, w / 2, 1, "#000000", 700, 45, fonts[4].name, 1, 1, w / 1.5)}
+            ${tspan({ text: creative.text1, x: w / 2, maxLines: 1, fill: "#000000", weight: 700, size: 45, family: fonts[4].name, lineHeight: 1, leadingDy: 1, maxWidth: w / 1.5, uppercase: true })}
           </text>
 
           <text
@@ -1154,7 +998,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text2, (w / 4) - 40, 4, "#000000", 400, 26, fonts[4].name, 1.2, 1, 250)}
+            ${tspan({ text: creative.text2, x: (w / 4) - 40, maxLines: 4, fill: "#000000", weight: 400, size: 26, family: fonts[4].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 250, uppercase: true })}
           </text>
 
           <text
@@ -1164,7 +1008,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text3, ((w / 4) * 3) + 40, 4, "#000000", 400, 26, fonts[4].name, 1.2, 1, 250)}
+            ${tspan({ text: creative.text3, x: ((w / 4) * 3) + 40, maxLines: 4, fill: "#000000", weight: 700, size: 26, family: fonts[4].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 250, uppercase: true })}
           </text>
 
           <text
@@ -1174,7 +1018,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             opacity="${animate().opacity(f, 25)}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text4, w / 2, 1, "#000000", 700, 28, fonts[4].name, 1, 1, w / 1.5)}
+            ${tspan({ text: creative.text4, x: w / 2, maxLines: 1, fill: "#000000", weight: 700, size: 28, family: fonts[4].name, lineHeight: 1, leadingDy: 1, maxWidth: w / 1.5, uppercase: true })}
           </text>
         </svg>
       `;
@@ -1185,67 +1029,28 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
 
       const positions: Record<number, any> = {
         250: {
-          text1: {
-            y: 27,
-          },
-          image: {
-            l: 0,
-            y: 65,
-            h: h * 0.63,
-            w: w,
-          },
-          text2: {
-            y: 120,
-            x: 65,
-          },
-          text3: {
-            y: 120,
-            x: 240,
-          },
+          text1: { y: 27 },
+          image: { l: 0, y: 65, h: h * 0.63, w: w },
+          text2: { y: 120, x: 65 },
+          text3: { y: 120, x: 240 },
         },
         600: {
-          text1: {
-            y: 85,
-          },
-          image: {
-            l: 0,
-            y: 150,
-            h: h * 0.4,
-            w: w,
-          },
-          text2: {
-            y: 430,
-            x: w / 2,
-          },
-          text3: {
-            y: 530,
-            x: w / 2,
-          },
+          text1: { y: 85 },
+          image: { l: 0, y: 150, h: h * 0.4, w: w },
+          text2: { y: 430, x: w / 2 },
+          text3: { y: 530, x: w / 2 },
         },
         90: {
-          text1: {
-            y: 45,
-          },
-          image: {
-            l: 20,
-            y: 0,
-            h: h,
-            w: h,
-          },
-          text2: {
-            y: 20,
-            x: w / 1.7,
-          },
-          text3: {
-            y: 20,
-            x: w / 1.2,
-          },
+          text1: { y: 45 },
+          image: { l: 20, y: 0, h: h, w: h },
+          text2: { y: 20, x: w / 1.7 },
+          text3: { y: 20, x: w / 1.2 },
         },
       };
       const position = positions[h];
       const horizontal = h == 90;
       const vertical = h == 600;
-      
+
       return `
         <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
           <image
@@ -1270,7 +1075,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             y="${position.text1.y}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text1, horizontal ? 130 : w / 2, vertical ? 2 : 1, "#000000", 700, 14, fonts[4].name, 1, 1, w / 1.5)}
+            ${tspan({ text: creative.text1, x: horizontal ? 130 : w / 2, maxLines: vertical ? 2 : 1, fill: "#000000", weight: 700, size: 14, family: fonts[4].name, lineHeight: 1, leadingDy: 1, maxWidth: w / 1.5, uppercase: true })}
           </text>
 
           <text
@@ -1279,7 +1084,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             y="${horizontal ? 1000 : position.image.y + position.image.h + 5}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text4, w / 2, vertical ? 2 : 1, "#000000", 700, 6, fonts[4].name, 1.2, 1, w / 1.5)}
+            ${tspan({ text: creative.text4, x: w / 2, maxLines: vertical ? 2 : 1, fill: "#000000", weight: 700, size: 6, family: fonts[4].name, lineHeight: 1.2, leadingDy: 1, maxWidth: w / 1.5, uppercase: true })}
           </text>
 
           <text
@@ -1288,7 +1093,7 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             y="${position.text2.y}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text2, position.text2.x, 4, "#000000", 400, 8, fonts[4].name, 1.2, 1, 80)}
+            ${tspan({ text: creative.text2, x: position.text2.x, maxLines: 4, fill: "#000000", weight: 400, size: 8, family: fonts[4].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 80, uppercase: true })}
           </text>
 
           <text
@@ -1297,12 +1102,12 @@ export async function etatpur(identifier: Identifier, creative: Creative) {
             y="${position.text3.y}"
             letter-spacing="3px"
           >
-            ${tspan(creative.text3, position.text3.x, 4, "#000000", 400, 8, fonts[4].name, 1.2, 1, 80)}
+            ${tspan({ text: creative.text3, x: position.text3.x, maxLines: 4, fill: "#000000", weight: 700, size: 8, family: fonts[4].name, lineHeight: 1.2, leadingDy: 1, maxWidth: 80, uppercase: true })}
           </text>
         </svg>
       `;
     },
-    (size) => `/background/etatpur_${size.w}x${size.h}.png`,
+    (size) => `/background/${identifier.id === "06VA8072003" ? "acidosalicilico" : "etatpur"}_${size.w}x${size.h}.png`,
     [
       { key: "image", file: creative.image },
       { key: "logo", file: `/logo/etatpur.png` },
